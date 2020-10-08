@@ -1,0 +1,35 @@
+1. median 10,000,000 int, O(n)
+
+9, 2, 3, 5, 7, 1, 8, 4, 6
+1, 2, 3, 4, 5, 6, 7, 8, 9
+2, 3, 6, 4, 1, 5, 9, 8, 7
+
+
+1, 2, 3,5,7       9
+
+int count = 0;
+int i, min;
+min = -1;
+max = 999999;
+for(i = 0; i < N; i++)
+{
+    if(max > min && arr[i] < max)
+    {
+        max = arr[i];
+    }
+    else if(arr[i] > max)
+    {
+        max = arr[i];
+    }
+    if(max > min && arr[i] > min)
+    {
+        min = arr[i];
+    }
+    else if(arr[i] < min)
+    {
+        min = arr[i];
+    }
+
+    if(max == min)
+        return max;
+}

@@ -1,0 +1,8 @@
+## push stack your change
+git stash
+
+## pop stack your change
+git stash pop
+
+## fetch your change
+git stash apply

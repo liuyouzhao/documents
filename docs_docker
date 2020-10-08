@@ -1,0 +1,4 @@
+sudo docker ps
+sudo docker logs -f 7aa82e10c84b
+sudo docker logs -f 7aa82e10c84b --tail=100
+sudo docker exec -it 7aa82e10c84b bash

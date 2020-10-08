@@ -1,0 +1,17 @@
+SprintBoot:
+
+@SpringBootApplication
+public class MainApplication{
+    public static void main(String[] args) {
+        SpringApplication.run(MainApplication.class, args);
+    }
+}
+
+
+## When WebClientTest found MergedAnnotation ClassNotFound, turn 5.2.5 into 5.1.2 in pom.xml
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>5.1.2.RELEASE</version>
+            <scope>test</scope>
+        </dependency>

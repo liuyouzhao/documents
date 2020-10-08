@@ -1,0 +1,614 @@
+1. cast ================================
+static_cast, fundimantal type, inherent relationship, why? It will check the type! A *a = new A; B *b = (B*) a;
+const_cast, only convert const pointer to non-const pointer
+dynamic_cast, convert class which has virtual functions
+
+2. struct memory alignment ?
+struct A
+{
+    int a;
+    char b;
+};
+sizeof(a) == 4
+sizeof(b) == 1
+N = 2, sizeof(A) = N * sizeof(a) = 2 * 4 = 8;
+
+
+3. volatile, explicit, register, inline, const
+
+(1) volatile
+volatile, will not optimize during compiling.
+
+int func(volatile int *ptr)
+{
+    return *ptr * *ptr;
+}
+
+int func(volatile int *ptr)
+{
+    int a = *ptr;
+    int b = *ptr;
+    return a * b;
+}
+
+(2) explicit
+class A
+{
+public:
+explicit A(int n)
+}
+
+A a = 10; will not be passed by compiler.
+
+
+(3) const
+const int *a = &b; a can point to other number address, but *a can not be changed through *a = 3;
+int * const a = &b; a cannot point to other address, but *a can be changed through *a = 3;
+const int const *a = &b; both address and content cannot be changed.
+
+void testConstFunction(int _x) const {...}
+const member function in class cannot modify any member(except mutable) or call any function that not const.
+return const, non-const pointer.
+
+(4) mutable, can be modify in const function.
+
+(5) register
+register is only for local variables in a function
+multi-used variables can be kept in the registers for reuse.
+only INT32 type vars is available in 32-bit CPU.
+too many register vars will be ignored.
+
+(6) inline
+code in inline function will be converted into ASM code and expanded directly into caller's position.
+recursive inline function will lose the inline feature.
+int (*func)(int a, int b) = inline_function; will force compiler to generate independent ASM function code.
+
+
+4. memory overflow
+(1) stack overflow?
+(2) heap overflow?
+
+
+5. gcc/g++ params
+
+Preprocess, compile, assemble, link
+
+(1) -fPIC, share dynamic symbols and address.
+(2) -rdynamic, put all symbols into dynamic list. for dlopen use.
+(3) -static, -share, use system .a or .so
+(4) -prefix, where to search
+(5) -M show all includes, -MM show all .c (-MD, -MMD, to .d file) 
+(6) -sysroot
+(7) -fno-bounds-check, close array overflow check
+(8) -freg-struct-return, small struct will be accessed in registers
+(8) -fstack-check, stack overflow check
+
+5.1 version maitainance
+After installing with "sudo apt-get install gcc-4.8"
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 50
+then
+sudo update-alternatives --config gcc
+choose one you want.
+
+
+
+
+#ifdef __cplusplus
+cout << "C++";
+#else
+printf("c\n");
+#endif
+
+
+6. Heap/Stack
+In running progress Heap:
+malloc()
+
+many debris.
+
+In compiling progress Stack:
+alloca()
+
+no debris.
+
+7. BSS/TEXT/DATA/.RODATA/HEAP/STACK
+TEXT: Code segment.(Read Only)
+DATA: Initialized data, a program's portion of virtual address space.
+      Data segment contains ro and rw areas.
+BSS: Block Started Symbol, unitialized data will be autometically set 0
+
+
+objdump -h to see ASM
+nm ./a.out to see BSS/DATA and TEXT
+ulimit -s to show max stack size in linux
+
+int map[64]; ==> BSS
+int a = 0; ==> DATA
+const/string ==>.RODATA
+
+|Text |
+|Data |
+|BSS  |
+|HEAP | from up to bottom
+......  meet exhausted, but use virtual memory will not.
+|STACK| from bottom to up, use virtual memory it appears anywhere
+
+
+8. gdb
+gdb attach [pid]
+
+(1) info r
+
+    %rax 作为函数返回值使用.
+    %rsp 栈指针寄存器，指向栈顶
+    %rbp Stack address for function calling
+    %rdi，%rsi，%rdx，%rcx，%r8，%r9 用作函数参数，依次对应第1参数，第2参数。。。
+    %rbx，%rbp，%r12，%r13，%14，%15 用作数据存储，遵循被调用者使用规则，简单说就是随便用，调用子函数之前要备份它，以防他被修改
+    %r10，%r11 用作数据存储，遵循调用者使用规则，简单说就是使用之前要先保存原值
+
+(2) x /16wx 0xffff...
+##use p to see pointer or object
+p /x (*mPoolBusy.begin())->threadId
+
+
+(3) set $rsp=0xffff
+
+(4) watch *(unsigned int*)0xffff..=0x31313131
+
+(5) info threads
+check all running threads and see the LWP to see the proc ID
+
+(6) info proc stat 18198
+See a specific LWP thread status.
+Status explaination
+-------------------------------------
+t : tracing stop
+s : sleeping
+...
+
+(7) thread apply all bt
+See all threads backtrace
+## to select one thread
+(gdb)thread thread-id
+
+When you are in a thread, use frame to jump stack frame, 
+or up 1, down 1 to move to different frames.
+
+(gdb)frame 2
+(gdb)up 1
+(gdb)down 1
+
+(8) info args
+See current function's arguments
+
+9. coredump
+(1) check system parameters
+sysctl kernel.core_pattern
+
+(2) shows like: 
+kernel.core_pattern = |/usr/share/apport/apport %p %s %c %d %P
+
+(3) See /usr/share/apport/apport file, the python file process core dump
+apport's logs are in /var/log/apport.log
+/etc/apport/crashdb.conf tells you where the reports will be sent.
+
+(4) If you see executable does not belong to a package, ignoring. You could enable unpackage coredump by changing the apport line 617
+#if not apport.fileutils.get_config('main', 'unpackaged', False, bool=True):
+if False:
+then check /var/crashes you will find your crash report file
+
+(5) apport-unpack _mnt_1t_workspace_coredump_main.1000.crash /tmp/crashes/
+(6) cd /tmp/crashes
+gdb -c ./CoreDump
+(gdb) symbol-file YOUR_BIN
+
+
+9. fdisk/lsblk/du
+lsblk -O # see UUID
+
+# enter partition editor
+fdisk /dev/vda
+
+# see help
+m
+# delete partitions
+d
+# create partition
+n
+
+
+10. MQTT/TCP
+
+(1) Why select MQTT
+Other protocol: XMPP/CoAP
+XMPP is too heavy using XML, not proper for IOT embedded device.
+Point to point protocol, not message subscription.
+CoAP need web and database environment.
+
+
+(2) MQTT features
+UTF-8==============================
+
+
+QoS:==========================================
+Quality of Service.
+QoS-0 just like UDP, only based on the TCP/IP connection stability and protocol to guarantee the message arrival.
+(GPS reporting, alive keeping, current state announcement.)
+
+QoS-1 More than once, can be duplicated, has dup state tag.
+(Open lock, open any door, login event, logout event)
+
+QoS-2 only once, garrantee arrival, no duplicate.
+(Payment!)
+
+Heartbit:======================================
+Send PINGREQ, Recv PINTRESP
+
+
+RETAIN ========================================
+  ------------
+ | MQTT Server|  transfer RETAIN message immediately
+  ------------    <==subscribe   [Server App/Mobile App]
+     ||Send RETAIN msg
+    [Device]
+
+Resend RETAIN message will remove the previous one(Delete method).
+
+
+
+Will Flag(Testament) =========================
+
+  ---------------
+  | MQTT Server |publish who is lost ==>be subscribed [ServerApp]
+  ---------------
+         ||
+         || lost connect!
+
+   [Smart Device]
+
+
+
+(3) MQTT Protocol format
+
+
+-------------------------------------------------------------------------
+Byte[1]      |Message Type 4 bits| dup flag 1 bit | QoS 2 bits | RETAIN |
+Byte[1]      |      Remain Length: 0x7FFFFFFF == 256MB                  |
+-------------------------------------------------------------------------
+Byte[8]      | Protocol Name                                            |
+Byte[1]      | Version                                                  |
+-------------------------------------------------------------------------
+Byte[1]      | User name flag| Will retain| Will Qos| Will Flag| Clean Session|Reserved|
+-------------------------------------------------------------------------
+Byte[2]      |Keep Alive Timer MSB | LSB|
+-------------------------------------------------------------------------
+Byte[N]      |Payload (N=Length-(minus)12
+-------------------------------------------------------------------------
+
+(4) MQTT Frameworks
+
+Apache-Apollo, HiveMQ, EMQ, Mosquitto.
+
+(5) Architechture
+                           
+                         topic1------sbscrb
+                                       ||
+      |Topics|         session1----  client1
+Broker|Topic filter|   session2----  client2
+                       session3----  client3
+
+
+(6) Qos0, 1, 2
+
+Qos0================================================
+Publisher          Broker            Subscripter
+         Send
+    -------------->  |       Send
+                     | ---------------->
+
+   | Delete
+
+Qos1================================================
+Publisher        Broker            Subscripter
+     |Restore
+        Send
+     |------------->|
+           (Resend) | Restore 
+                    |           Send
+            ACK     | ----------------->|
+      <------------ |        (Resend)                      
+     |Delete        |    ACK             
+                    | <-----------------|
+                    | Delete
+
+
+Qos2================================================
+Publisher         Broker           Subscripter
+    |Restore
+    |   Send
+    |-------------->|
+           REC      |Restore
+      <-------------|
+           REL
+      ------------->|
+          COMP
+      <-------------|     Send
+     Delete         | --------------> |
+                                      | Restore
+                           (Will Resend)
+
+                      <-------REC-----
+                           (Won't Resend)
+                      --------REL---->|
+                                      | Here to norify! Only Once!!!
+                                     
+                      <-------COMP----|
+                    |Delete
+
+11. fork, vfork, exec, system
+(1) system is the encapsulation of exec
+(2) exec should use fork first
+(3) vfork should call exec or exit to evoke parent.
+
+zygote need to be careful about opened fds.
+
+
+12. elf file
+(1) executable
+(2) shared object
+(3) relocated file
+
+
+95. epoll, select, poll
+(1) Multiplexing functions
+O(n) select == poll(use linklist, unlimited fds)
+O(1) epoll LT&ET mode
+
+(2)
+int epoll_create(int size);  
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);  
+int epoll_wait(int epfd, struct epoll_event *events,int maxevents, int timeout);  
+
+epoll_init init epoll memory cache, same slab kmem_cache_create
+epoll_ctl  add fd into epoll list
+epoll_wait return fds
+
+
+User mode       | Kernel mode
+
+P1
+epoll_create     -> create cache list by kmem_cache_create
+epoll_ctl        -> add fd number to the cache
+epoll_wait       -> put P1 to wait list
+                    * I/O interupt happened, put P1 to active list
+                    * copy fds to the user mode memory
+
+
+for(i = 0; i < epoll_wait_return; i ++)
+    if(events.data.fd == your_id)
+....
+
+95. top command
+Any field is selectable as the sort field, and you control whether
+   they  are  sorted  high-to-low  or  low-to-high.   For  additional
+   information on sort provisions see topic 3c. TASK Area Commands.
+
+   a: PID  --  Process Id
+      The  task's unique process ID, which periodically wraps, though
+      never restarting at zero.
+
+   b: PPID  --  Parent Process Pid
+      The process ID of a task's parent.
+
+   c: RUSER  --  Real User Name
+      The real user name of the task's owner.
+
+   d: UID  --  User Id
+      The effective user ID of the task's owner.
+
+   e: USER  --  User Name
+      The effective user name of the task's owner.
+
+   f: GROUP  --  Group Name
+      The effective group name of the task's owner.
+
+   g: TTY  --  Controlling Tty
+      The name of the controlling  terminal.   This  is  usually  the
+      device  (serial  port,  pty,  etc.)  from which the process was
+      started, and which it uses for input  or  output.   However,  a
+      task  need  not  be  associated  with a terminal, in which case
+      you'll see '?' displayed.
+
+   h: PR  --  Priority
+      The priority of the task.
+
+   i: NI  --  Nice value
+      The nice value of the task.  A negative nice value means higher
+      priority,  whereas  a positive nice value means lower priority.
+      Zero in this field simply means priority will not  be  adjusted
+      in determining a task's dispatchability.
+
+   j: P  --  Last used CPU (SMP)
+      A  number  representing the last used processor.  In a true SMP
+      environment this will likely change frequently since the kernel
+      intentionally  uses  weak  affinity.   Also,  the  very  act of
+      running top  may  break  this  weak  affinity  and  cause  more
+      processes  to  change  CPUs  more  often  (because of the extra
+      demand for cpu time).
+
+   k: %CPU  --  CPU usage
+      The task's share of the elapsed CPU time since the last  screen
+      update, expressed as a percentage of total CPU time.  In a true
+      SMP environment, if 'Irix mode' is Off,  top  will  operate  in
+      'Solaris  mode' where a task's cpu usage will be divided by the
+      total number of CPUs.  You toggle 'Irix/Solaris' modes with the
+      'I' interactive command.
+
+   l: TIME  --  CPU Time
+      Total  CPU  time  the  task  has  used  since it started.  When
+      'Cumulative mode' is On, each process is listed  with  the  cpu
+      time  that  it  and  its  dead  children  has used.  You toggle
+      'Cumulative mode' with 'S', which is a command-line option  and
+      an  interactive  command.   See the 'S' interactive command for
+      additional information regarding this mode.
+
+   m: TIME+  --  CPU Time, hundredths
+      The same as 'TIME', but  reflecting  more  granularity  through
+      hundredths of a second.
+
+   n: %MEM  --  Memory usage (RES)
+      A task's currently used share of available physical memory.
+
+   o: VIRT  --  Virtual Image (kb)
+      The  total  amount  of  virtual  memory  used  by the task.  It
+      includes all code, data and shared libraries  plus  pages  that
+      have  been  swapped out and pages that have been mapped but not
+      used.
+
+   p: SWAP  --  Swapped size (kb)
+      Memory that is not resident but is present in a task.  This  is
+      memory  that  has been swapped out but could include additional
+      non-resident memory.  This column is calculated by  subtracting
+      physical memory from virtual memory.
+
+   q: RES  --  Resident size (kb)
+      The non-swapped physical memory a task has used.
+
+   r: CODE  --  Code size (kb)
+      The  amount  of virtual memory devoted to executable code, also
+      known as the 'text resident set' size or TRS.
+
+   s: DATA  --  Data+Stack size (kb)
+      The amount of virtual memory devoted to other  than  executable
+      code, also known as the 'data resident set' size or DRS.
+
+   t: SHR  --  Shared Mem size (kb)
+      The amount of shared memory used by a task.  It simply reflects
+      memory that could be potentially shared with other processes.
+
+   u: nFLT  --  Page Fault count
+      The number of major page faults that have occurred for a  task.
+      A  page  fault  occurs  when a process attempts to read from or
+      write to a virtual page that is not currently  present  in  its
+      address  space.   A  major  page  fault is when backing storage
+      access (such as  a  disk)  is  involved  in  making  that  page
+      available.
+
+   v: nDRT  --  Dirty Pages count
+      The  number  of  pages  that have been modified since they were
+      last written to disk.  Dirty pages  must  be  written  to  disk
+      before  the  corresponding physical memory location can be used
+      for some other virtual page.
+
+   w: S  --  Process Status
+      The status of the task which can be one of:
+         'D' = uninterruptible sleep
+         'R' = running
+         'S' = sleeping
+         'T' = traced or stopped
+         'Z' = zombie
+
+      Tasks shown as running should be more properly  thought  of  as
+      'ready  to run'  --  their task_struct is simply represented on
+      the Linux run-queue.  Even without a true SMP machine, you  may
+      see  numerous  tasks  in  this  state  depending on top's delay
+      interval and nice value.
+                
+
+
+96. C++ OO
+(1) Copy construction function:
+class A
+{
+public:
+A &operator=(const A &a);
+int *a;
+}
+you have to realloc a to another heap space.
+
+
+97. multi-process multi-thread schedule
+
+(1) schedule
+P1  [P1 registers stack P1-priority]
+----T1 [P1 registers P1-stack P1-priority T1-priority]
+----T2 [T2-registers T2-stack P1-priority T2-priority]
+----T3 [T3-registers T3-stack P1-priority T3-priority]
+
+(2) lock
+mutex_lock: pthread_mutex_lock
+mutex_recursive_lock:  T1->A->B->C->D Don't need to declare mutex_A, mutex_B...C,D
+                       T2->A->
+                       T3->A->
+cond_lock(cond, mutex)
+
+================================
+------mutex unlock------
+------wait for cond (block) -----
+------mutex lock -----
+------ return (unblock) -----
+================================
+
+mutex_lock
+while(!condition)
+{
+    pthread_cond_lock(cond, mutex);
+}
+mutex_unlock
+
+when notify:
+
+    pthread_mutex_lock(&__mutex);
+    alive = 1;
+    pthread_cond_signal(&__cond);
+    pthread_mutex_unlock(&__mutex);
+
+spin_lock: different from mutex lock in CPU usage, spin_lock keeps checking lock util getting the lock.
+
+
+(3) pthread_create, pthread_kill
+
+98. dlopen
+
+Lazy relocation, when use then alloc.
+
+
+99. Exception, difference between C++/java?
+
+100. C/C++ how types initialize?
+
+int a[5] = {1, 2, 3, 4, 5};
+
+
+101. Process bunch files for soft links
+ls -l libboost* |awk '{print $9}' |sed 's/.1.58.0//g' |sudo xargs -I {} ln -s {}.1.58.0 {}
+
+102. print first row, last column
+docker ps |awk 'NR==2; START{print}' |awk '{print $NF}' |xargs -i docker exec {} /start_job.sh
+
+103. PROXY for shell-command
+[1] Change shadowsocks' local server type to https
+export http_proxy=127.0.0.1:1080
+export https_proxy=127.0.0.1:1080
+[2] wget https://www.google.com
+
+104. kubelogin
+[1] Run 103.
+[2] kubelogin
+Switch browser to PROXY, then confirm the google account login
+
+
+105. qemu
+[1] Run x86_64 linux
+ qemu-system-x86_64 -drive file=./rootfs/linux2.6.34-ramdisk.img,index=0,media=disk,format=raw -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda console=ttyS0"
+
+106.Solve kernel incapable
+sudo apt install --reinstall linux-image-generic
+
+107. Use du to see files sized
+du -d N ## for N levels folders
+du -S ## only directories, no sub-dirs
+du -s ## display only toal for each directory
+
+108. netstat -ltnp | grep -w ':80' 

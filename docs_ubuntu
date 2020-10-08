@@ -1,0 +1,5 @@
+1. Auto-startup process
+[1] copy your runnable script into /etc/init.d/ folder
+[2] execute the command below:
+sudo update-rc.d your_script_name defaults
+
