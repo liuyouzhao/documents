@@ -612,3 +612,17 @@ du -S ## only directories, no sub-dirs
 du -s ## display only toal for each directory
 
 108. netstat -ltnp | grep -w ':80' 
+
+109. ptrace, strace, dtrace, ftrace
+strace: system(calls) trace, listing system calls being invoked by a user process. When a system call is invoked, the strace will be hooked and the target process
+will be paused(interrupted), and unpaused returning back to the target process. This switch back and forth will consume cpu time. Kernel will switch context and recover
+registers back and forth. So strace is not fast.
+ptrace: acts as a mediator between the running process and a higher level tool such as gdb or strace. 
+ptrace has the highest priority to modify user process memory address.
+dtrace: dynamic tracing with a D language being hooked when a system call triggered.
+syscall::read:entry {
+    printf("read has been called.");
+}
+Whenever system call read, the hook above will be called.
+
+
