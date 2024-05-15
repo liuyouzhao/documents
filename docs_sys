@@ -624,5 +624,29 @@ syscall::read:entry {
     printf("read has been called.");
 }
 Whenever system call read, the hook above will be called.
+dtrace -s my_probe.d
 
-
+ftrace, trace system calls into tracefs file.
+https://www.kernel.org/doc/html/v5.0/trace/ftrace.html
+# tracer: function
+#
+# entries-in-buffer/entries-written: 140080/250280   #P:4
+#
+#                              _-----=> irqs-off
+#                             / _----=> need-resched
+#                            | / _---=> hardirq/softirq
+#                            || / _--=> preempt-depth
+#                            ||| /     delay
+#           TASK-PID   CPU#  ||||    TIMESTAMP  FUNCTION
+#              | |       |   ||||       |         |
+            bash-1977  [000] .... 17284.993652: sys_close <-system_call_fastpath
+            bash-1977  [000] .... 17284.993653: __close_fd <-sys_close
+            bash-1977  [000] .... 17284.993653: _raw_spin_lock <-__close_fd
+            sshd-1974  [003] .... 17284.993653: __srcu_read_unlock <-fsnotify
+            bash-1977  [000] .... 17284.993654: add_preempt_count <-_raw_spin_lock
+            bash-1977  [000] ...1 17284.993655: _raw_spin_unlock <-__close_fd
+            bash-1977  [000] ...1 17284.993656: sub_preempt_count <-_raw_spin_unlock
+            bash-1977  [000] .... 17284.993657: filp_close <-__close_fd
+            bash-1977  [000] .... 17284.993657: dnotify_flush <-filp_close
+            sshd-1974  [003] .... 17284.993658: sys_select <-system_call_fastpath
+            ....
